@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CAS Audit Tool</title>
+    <link rel="stylesheet" href="styles/loader.css">
+    <link rel="stylesheet" href="styles/table.css">
+    <link rel="stylesheet" href="styles/toggle.css">
+    <link rel="stylesheet" href="styles/button.css">
+    <link rel="stylesheet" href="styles/light.css">
+    <style>
+        #container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+
+
+<body>
+    <center>
+        <img src="CAS.jpeg" height="100" width="100"></img>
+    <h1>CAS AUDIT TOOL</h1></center>
+    <div id="container">
+        <button class="btn-12" onclick="runAudit()"><span>Run Audit</span></button>
+        <button class="btn-12" onclick="openResultFile()"><span>Result File</span></button>
+        <button class="btn-12" onclick="logsGeneration()"><span>Logs Generate</span></button>
+        <button class="btn-12" onclick="openAutomateServices()"><span>Automate Services</span></button> 
+        <button class="btn-12" onclick="toggleAutomateServices()"><span>About</span></button> 
+        <button class="btn-12" onclick="toggleManualServices()"><span>Manual</span></button> 
+        
+    </div>
+
+    <div>
+        <label for="options">Choose an option:</label>
+        <select id="options">
+            <option value="%temp">%temp</option>
+            <option value="temp">temp</option>
+            <option value="prefetch">prefetch</option>
+            <option value="recycle">recycle</option>
+        </select>
+        <button onclick="runFunction()">Clear</button>
+    </div>
+
+
+    <div id="loaderContainer" style="display: none;">
+        <div class="loader">
+            <svg viewBox="0 0 80 80">
+                <circle id="test" cx="40" cy="40" r="32"></circle>
+            </svg>
+        </div>
+        <div class="loader triangle">
+            <svg viewBox="0 0 86 80">
+                <polygon points="43 8 79 72 7 72"></polygon>
+            </svg>
+        </div>
+        <div class="loader">
+            <svg viewBox="0 0 80 80">
+                <rect x="8" y="8" width="64" height="64"></rect>
+            </svg>
+        </div>
+    </div>
+
+
+    <div id="displayScreen"></div>
+
+
+    <script>
+
+
+
+        function runFunction() {
+            var selectedOption = document.getElementById("options").value;
+            switch (selectedOption) {
+                case "%temp":
+                    // Call function for option 1
+                    temp_percent();
+                    break;
+                case "temp":
+                    // Call function for option 2
+                    temp();
+                    break;
+                case "prefetch":
+                    // Call function for option 3
+                    prefetch();
+                    break;
+                case "recycle":
+                    // Call function for option 4
+                    recycle();
+                    break;
+                default:
+                    // Default case
+                    console.log("No option selected.");
+            }
+        }
+
+        function temp_percent() {
+            showLoader();
+            ipcRenderer.send('percent-temp');
+        }
+
+        function temp() {
+            showLoader();
+            ipcRenderer.send('temp');
+        }
+
+        function prefetch() {
+            showLoader();
+            ipcRenderer.send('prefetch-off');
+        }
+
+        function recycle() {
+            showLoader();
+            ipcRenderer.send('recycle-off');
+        }
+
+
+
+        const { ipcRenderer } = require('electron');
+        var automationEnabled = false;
+        var manualEnabled = false;
+
+        function toggleAutomateServices() {
+            automationEnabled = !automationEnabled;
+            openAboutWindow();
+        }
+
+        function toggleManualServices() {
+            manualEnabled = !manualEnabled;
+            openManualWindow();
+        }
+
+        function openAutomateServices() {
+            showLoader();
+            ipcRenderer.send('services-off');
+        }
+
+        function runAudit() {
+            showLoader();
+            ipcRenderer.send('run-audit');
+        }
+
+        const { shell } = require('electron');
+        function openResultFile() {
+            // Replace 'system_info.pdf' with the actual path to your PDF file
+            shell.openPath('system_info.pdf')
+                .then(() => console.log('File opened'))
+                .catch(err => console.error('Error opening file:', err));
+        }
+
+        function logsGeneration() {
+            showLoader();
+            ipcRenderer.send('logs-generate');
+        }
+
+        function openManualWindow() {
+            if (!manualEnabled) {
+                document.getElementById("aboutContent").innerHTML = "";
+                return;
+            }
+
+            var headers = ["Manual Tasks", "Process"]
+            var manualTasks = {
+                "Last Update Of Antivirus": {"Process":"Check In Antivirus"},
+                "Disable AutoPlay":{"Process":"In Windows Settings"},
+
+                "Disable Password Auto-Save": {"Process":"Password Settings In Browser"},
+                "Unwanted Softwares Delete":{"Process":"Use Control Panel"},
+
+                "secpol.msc->Acc pol->Pass pol": {"Process":"Password must meet complexity[Enable]"},
+                "secpol.msc->Local pol->Sec options":{"Process":"Machine inactivity limit[60secs]"},
+                "secpol.msc->Local pol->Acc Lockout Pol": {"Process":"Reset account lockout[10mins]"},
+                "If Bios-Password not Set": {"Process":"Set Bios Password"},
+            };
+
+            var manualContent = "<table class='about-table'>";
+            manualContent += "<tr>";
+            for (var i = 0; i < headers.length; i++) {
+                manualContent += "<th>" + headers[i] + "</th>";
+            }
+            manualContent += "</tr>";
+
+            var maxRows = Math.max(Object.keys(manualTasks).length);
+            for (var j = 0; j < maxRows; j++) {
+                manualContent += "<tr>";
+                manualContent += "<td>" + (Object.keys(manualTasks)[j] || "") + "</td>";
+                manualContent += "<td>" + (manualTasks[Object.keys(manualTasks)[j]].Process || "") + "</td>";
+                manualContent += "</tr>";
+            }
+            manualContent += "</table>";
+
+            document.getElementById("aboutContent").innerHTML = manualContent;
+        }
+
+        function openAboutWindow() {
+            if (!automationEnabled) {
+                document.getElementById("aboutContent").innerHTML = "";
+                return;
+            }
+
+            var headers = ["General Audit", "Logs", "Services"];
+            var general_audit_data = {
+                "IP Configuration": "Ip address",
+                "Mac address": "Mac Address",
+                "Windows version": "Windows version",
+                "Users Information": "No of users",
+                "Antivirus Details": "Antivirus Check",
+                "Last updated": "Last Updated Date",
+                "OS last updated": "Last OS updated date",
+                "Licensed OS": "License Details of OS",
+                "Clean Desktop": "Desktop Clean/Not",
+                "Last Updated": "Last Updated Details",
+                "BIOS Password Check": "BIOS Password Check",
+                "Shared Folders": "Shared Folders details"
+            };
+            var logs_data = {
+                "Windows Logs": "Windows Logs",
+                "USB Logs": "USB Logs",
+                "Personal files": "Personal media files"
+            };
+            var services_data = {
+                "Bluetooth": "Bluetooth Service Status",
+                "Geo Location": "Location Service Status",
+                "Xbox": "Xbox Services Status",
+                "Plug and Play": "Plug and Play Status",
+                "Wi-fi": "Wi-fi Status",
+                "password policy": "Password Policy",
+                "Audit logon policy": "Audit Logon policy",
+                "Remote Disabled": "RDP remote disabled",
+                "Telnet Service": "Telnet Service status"
+            };
+
+            var aboutContent = "<table class='about-table'>";
+            aboutContent += "<tr>";
+            for (var i = 0; i < headers.length; i++) {
+                aboutContent += "<th>" + headers[i] + "</th>";
+            }
+            aboutContent += "</tr>";
+
+            var maxRows = Math.max(Object.keys(general_audit_data).length, Object.keys(logs_data).length, Object.keys(services_data).length);
+            for (var j = 0; j < maxRows; j++) {
+                aboutContent += "<tr>";
+                aboutContent += "<td>" + (general_audit_data[Object.keys(general_audit_data)[j]] || "") + "</td>";
+                aboutContent += "<td>" + (logs_data[Object.keys(logs_data)[j]] || "") + "</td>";
+                aboutContent += "<td>" + (services_data[Object.keys(services_data)[j]] || "") + "</td>";
+                aboutContent += "</tr>";
+            }
+            aboutContent += "</table>";
+
+            document.getElementById("aboutContent").innerHTML = aboutContent;
+        }
+
+
+        function showLoader() {
+            document.getElementById('loaderContainer').style.display = 'block';
+        }
+
+        function hideLoader() {
+            document.getElementById('loaderContainer').style.display = 'none';
+        }
+
+        ipcRenderer.on('audit-result', (event, result) => {
+            hideLoader();
+            document.getElementById("displayScreen").innerText = result; // Display the result
+        });
+    </script>
+    <div id="aboutContent"></div>
+</body>
+</html>

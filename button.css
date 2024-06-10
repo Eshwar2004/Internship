@@ -1,0 +1,18 @@
+.btn-12 {
+  background-color: #4CAF50; /* Green background */
+  border: none; /* Remove border */
+  color: rgb(24, 15, 15); /* White text */
+  padding: 12px 24px; /* Padding */
+  text-align: center; /* Center text */
+  text-decoration: none; /* Remove underline */
+  display: inline-block; /* Display as inline block */
+  font-size: 16px; /* Font size */
+  margin: 4px 2px; /* Margin between buttons */
+  cursor: pointer; /* Add pointer cursor */
+  border-radius: 20px; /* Rounded corners */
+  transition: background-color 0.3s; /* Smooth transition */
+}
+
+.btn-12:hover {
+  background-color: #45a049; /* Darker green on hover */
+}
